@@ -22,14 +22,13 @@ public class FSBInteropConfig {
             .create();
 
     public static final FSBInteropConfig INSTANCE = FSBInteropConfig.load(FabricLoader.getInstance().getConfigDir().resolve("fsb-interop.json").toFile());
-
-    private File file;
-
+    public FSBInteropMode mode = FSBInteropMode.NATIVE;
     public boolean interoperability = true;
-    public boolean debugMode = false;
+    public boolean debugMode = true;
     public boolean preferFSBNative = true;
     public boolean processOptiFine = true;
     public boolean processMCPatcher = false;
+    private File file;
 
     public static FSBInteropConfig load(File file) {
         FSBInteropConfig config;

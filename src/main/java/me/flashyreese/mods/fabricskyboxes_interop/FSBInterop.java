@@ -4,10 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
 import io.github.amerebagatelle.fabricskyboxes.SkyboxManager;
+import io.github.amerebagatelle.fabricskyboxes.api.skyboxes.Skybox;
 import io.github.amerebagatelle.fabricskyboxes.util.object.MinMaxEntry;
 import me.flashyreese.mods.fabricskyboxes_interop.client.config.FSBInteropConfig;
+import me.flashyreese.mods.fabricskyboxes_interop.client.config.FSBInteropMode;
 import me.flashyreese.mods.fabricskyboxes_interop.mixin.SkyboxManagerAccessor;
+import me.flashyreese.mods.fabricskyboxes_interop.sky.OptiFineCustomSky;
 import me.flashyreese.mods.fabricskyboxes_interop.utils.BlenderUtil;
 import me.flashyreese.mods.fabricskyboxes_interop.utils.ResourceManagerHelper;
 import me.flashyreese.mods.fabricskyboxes_interop.utils.Utils;
@@ -82,6 +86,8 @@ public class FSBInterop {
     private void convertNamespace(ResourceManagerHelper resourceManagerHelper, String skyParent, Pattern pattern) {
         AtomicBoolean hasGeneratedOverworldSky = new AtomicBoolean();
         AtomicBoolean hasGeneratedEndSky = new AtomicBoolean();
+        final JsonArray overworldLayers = new JsonArray();
+        final JsonArray endLayers = new JsonArray();
         resourceManagerHelper.searchIn(skyParent)
                 .filter(id -> id.getPath().endsWith(".properties"))
                 .sorted(Comparator.comparing(Identifier::getPath, (id1, id2) -> {
@@ -127,7 +133,6 @@ public class FSBInterop {
                         } catch (IOException e) {
                             if (FSBInteropConfig.INSTANCE.debugMode) {
                                 this.logger.error("Error trying to read namespaced identifier: {}", id);
-                                e.printStackTrace();
                             }
                             return;
                         } finally {
@@ -136,25 +141,62 @@ public class FSBInterop {
                             } catch (IOException e) {
                                 if (FSBInteropConfig.INSTANCE.debugMode) {
                                     this.logger.error("Error trying to close input stream at namespaced identifier: {}", id);
-                                    e.printStackTrace();
                                 }
                             }
                         }
 
-                        if (!hasGeneratedOverworldSky.get() && world.equals("world0")) {
-                            this.generateSky("minecraft:overworld", "overworld");
-                            this.generateOverworldDecorations();
-                            hasGeneratedOverworldSky.set(true);
+                        if (FSBInteropConfig.INSTANCE.mode == FSBInteropMode.CONVERSION) {
+                            if (!hasGeneratedOverworldSky.get() && world.equals("world0")) {
+                                this.generateSky("minecraft:overworld", "overworld");
+                                this.generateOverworldDecorations();
+                                hasGeneratedOverworldSky.set(true);
+                            }
+
+                            if (!hasGeneratedEndSky.get() && world.equals("world1")) {
+                                this.generateSky("minecraft:the_end", "end");
+                                hasGeneratedEndSky.set(true);
+                            }
+
+                            this.convert(resourceManagerHelper, skyParent, name, id, properties, world);
+                        } else if (FSBInteropConfig.INSTANCE.mode == FSBInteropMode.NATIVE) {
+                            JsonObject json = Utils.convertOptiFineSkyProperties(resourceManagerHelper, properties, id);
+                            if (json != null) {
+                                if (world.equals("world0")) {
+                                    overworldLayers.add(json);
+                                } else if (world.equals("world1")) {
+                                    endLayers.add(json);
+                                }
+                            }
                         }
 
-                        if (!hasGeneratedEndSky.get() && world.equals("world1")) {
-                            this.generateSky("minecraft:the_end", "end");
-                            hasGeneratedEndSky.set(true);
-                        }
-
-                        this.convert(resourceManagerHelper, skyParent, name, id, properties, world);
                     }
                 });
+
+        if (FSBInteropConfig.INSTANCE.mode == FSBInteropMode.NATIVE) {
+            if (!overworldLayers.isEmpty()) {
+                JsonObject overworldJson = new JsonObject();
+                overworldJson.addProperty("schemaVersion", 2);
+                overworldJson.addProperty("type", "optifine-custom-sky");
+                overworldJson.add("layers", overworldLayers);
+                overworldJson.addProperty("world", "minecraft:overworld");
+
+                Skybox skybox = OptiFineCustomSky.CODEC.decode(JsonOps.INSTANCE, overworldJson).getOrThrow().getFirst();
+
+                SkyboxManager.getInstance().addSkybox(Identifier.of("fsb-interop", "native-optifine-custom-sky-overworld"), skybox);
+            }
+
+            if (!endLayers.isEmpty()) {
+                JsonObject endJson = new JsonObject();
+                endJson.addProperty("schemaVersion", 2);
+                endJson.addProperty("type", "optifine-custom-sky");
+                endJson.add("layers", endLayers);
+                endJson.addProperty("world", "minecraft:the_end");
+
+                Skybox skybox = OptiFineCustomSky.CODEC.decode(JsonOps.INSTANCE, endJson).getOrThrow().getFirst();
+
+                SkyboxManager.getInstance().addSkybox(Identifier.of("fsb-interop", "native-optifine-custom-sky-end"), skybox);
+            }
+        }
     }
 
     /**
@@ -167,8 +209,9 @@ public class FSBInterop {
     private void convert(ResourceManagerHelper resourceManagerHelper, String skyParent, String skyName, Identifier propertiesId, Properties properties, String world) {
         // Blend
         JsonObject blend = new JsonObject();
-        blend.addProperty("type", "custom");
         String blendType = properties.getProperty("blend", "add");
+        blend.addProperty("type", "custom");
+        //blend.addProperty("type", blendType);
         blend.add("blender", GSON.toJsonTree(BlenderUtil.getInstance().BLEND_MAP.getOrDefault(blendType, BlenderUtil.getInstance().BLEND_MAP.get("add"))).getAsJsonObject());
 
         // Texture Identifier
@@ -372,7 +415,7 @@ public class FSBInterop {
         } else {
             //Default South
             jsonAxis.add(0f);
-            jsonAxis.add(180f);
+            jsonAxis.add(90f);
             jsonAxis.add(0f);
         }
 

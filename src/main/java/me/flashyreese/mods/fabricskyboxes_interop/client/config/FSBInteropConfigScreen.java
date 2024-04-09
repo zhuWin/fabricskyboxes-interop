@@ -42,12 +42,19 @@ public class FSBInteropConfigScreen extends Screen {
 
     @Override
     protected void init() {
-        addDrawableChild(createBooleanOptionButton(this.width / 2 - 100 - 110, this.height / 2 - 10 - 12, 200, 20, "interoperability", value -> config.interoperability = value, () -> config.interoperability, () -> MinecraftClient.getInstance().reloadResources()));
-        addDrawableChild(createBooleanOptionButton(this.width / 2 - 100 + 110, this.height / 2 - 10 - 12, 200, 20, "prefer_fsb_native", value -> config.preferFSBNative = value, () -> config.preferFSBNative, this::reloadResourcesIfInterop));
+        addDrawableChild(createBooleanOptionButton(this.width / 2 - 100 - 110, this.height / 2 - 10 - 60, 420, 20, "interoperability", value -> config.interoperability = value, () -> config.interoperability, () -> {
+            MinecraftClient.getInstance().reloadResources();
+        }));
+        addDrawableChild(createFSBInteropModeOptionButton(this.width / 2 - 100 - 110, this.height / 2 - 10 - 36, 420, 20, "mode", value -> config.mode = value, () -> config.mode, () -> {
+            if (config.interoperability) {
+                MinecraftClient.getInstance().reloadResources();
+            }
+        }));
+        addDrawableChild(createBooleanOptionButton(this.width / 2 - 100 - 110, this.height / 2 - 10 - 12, 200, 20, "prefer_fsb_native", value -> config.preferFSBNative = value, () -> config.preferFSBNative, this::reloadResourcesIfInterop));
+        addDrawableChild(createBooleanOptionButton(this.width / 2 - 100 + 110, this.height / 2 - 10 - 12, 200, 20, "debug_mode", value -> config.debugMode = value, () -> config.debugMode, () -> {
+        }));
         addDrawableChild(createBooleanOptionButton(this.width / 2 - 100 - 110, this.height / 2 - 10 + 12, 200, 20, "process_optifine", value -> config.processOptiFine = value, () -> config.processOptiFine, this::reloadResourcesIfInterop));
         addDrawableChild(createBooleanOptionButton(this.width / 2 - 100 + 110, this.height / 2 - 10 + 12, 200, 20, "process_mcpatcher", value -> config.processMCPatcher = value, () -> config.processMCPatcher, this::reloadResourcesIfInterop));
-        addDrawableChild(createBooleanOptionButton(this.width / 2 - 100 - 110, this.height / 2 - 10 + 36, 200, 20, "debug_mode", value -> config.debugMode = value, () -> config.debugMode, () -> {
-        }));
         addDrawableChild(ButtonWidget
                 .builder(
                         Text.translatable(getTranslationKey("dump_data")),
@@ -72,7 +79,6 @@ public class FSBInteropConfigScreen extends Screen {
                                 }
                             } catch (IOException e) {
                                 this.logger.error("Error while deleting existing dump directory: {}", e.getMessage());
-                                e.printStackTrace();
                             }
 
                             try {
@@ -114,7 +120,7 @@ public class FSBInteropConfigScreen extends Screen {
                             }
                         }
                 )
-                .dimensions(this.width / 2 - 100 + 110, this.height / 2 - 10 + 36, 200, 20)
+                .dimensions(this.width / 2 - 100 - 110, this.height / 2 - 10 + 36, 420, 20)
                 .tooltip(Tooltip.of(Text.translatable(getTooltipKey(getTranslationKey("dump_data")))))
                 .build()
         );
@@ -152,6 +158,22 @@ public class FSBInteropConfigScreen extends Screen {
         return ButtonWidget.builder(ScreenTexts.composeToggleText(text, supplier.get()), button -> {
             boolean newValue = !supplier.get();
             button.setMessage(ScreenTexts.composeToggleText(text, newValue));
+            consumer.accept(newValue);
+            onChange.run();
+        }).dimensions(x, y, width, height).tooltip(Tooltip.of(tooltipText)).build();
+    }
+
+    private ButtonWidget createFSBInteropModeOptionButton(int x, int y, int width, int height, String key, Consumer<FSBInteropMode> consumer, Supplier<FSBInteropMode> supplier, Runnable onChange) {
+        String translationKey = getTranslationKey(key);
+        Text text = Text.translatable(translationKey);
+        Text tooltipText = Text.translatable(getTooltipKey(translationKey));
+        return ButtonWidget.builder(ScreenTexts.composeGenericOptionText(text, Text.translatable(getTranslationKey(supplier.get().getTranslationKey()))), button -> {
+            FSBInteropMode currentMode = supplier.get();
+            FSBInteropMode[] modes = FSBInteropMode.values();
+            int currentIndex = currentMode.ordinal();
+            int nextIndex = (currentIndex + 1) % modes.length; // Wrap around to the beginning if reached the end
+            FSBInteropMode newValue = modes[nextIndex];
+            button.setMessage(ScreenTexts.composeGenericOptionText(text, Text.translatable(getTranslationKey(newValue.getTranslationKey()))));
             consumer.accept(newValue);
             onChange.run();
         }).dimensions(x, y, width, height).tooltip(Tooltip.of(tooltipText)).build();
