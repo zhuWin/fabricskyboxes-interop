@@ -8,6 +8,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.amerebagatelle.fabricskyboxes.api.skyboxes.Skybox;
 import io.github.amerebagatelle.fabricskyboxes.mixin.skybox.WorldRendererAccess;
 import me.flashyreese.mods.fabricskyboxes_interop.client.config.FSBInteropConfig;
+import net.minecraft.block.enums.CameraSubmersionType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.gl.VertexBuffer;
@@ -56,8 +57,6 @@ public class OptiFineCustomSky implements Skybox {
         RenderSystem.depthMask(false);
         RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
         RenderSystem.setShaderTexture(0, WorldRendererAccess.getEndSky());
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferBuilder = tessellator.getBuffer();
         for (int i = 0; i < 6; ++i) {
             matrices.push();
             if (i == 1) {
@@ -76,12 +75,12 @@ public class OptiFineCustomSky implements Skybox {
                 matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-90.0f));
             }
             Matrix4f matrix4f = matrices.peek().getPositionMatrix();
-            bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
-            bufferBuilder.vertex(matrix4f, -100.0f, -100.0f, -100.0f).texture(0.0f, 0.0f).color(40, 40, 40, 255).next();
-            bufferBuilder.vertex(matrix4f, -100.0f, -100.0f, 100.0f).texture(0.0f, 16.0f).color(40, 40, 40, 255).next();
-            bufferBuilder.vertex(matrix4f, 100.0f, -100.0f, 100.0f).texture(16.0f, 16.0f).color(40, 40, 40, 255).next();
-            bufferBuilder.vertex(matrix4f, 100.0f, -100.0f, -100.0f).texture(16.0f, 0.0f).color(40, 40, 40, 255).next();
-            tessellator.draw();
+            BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
+            bufferBuilder.vertex(matrix4f, -100.0f, -100.0f, -100.0f).texture(0.0f, 0.0f).color(40, 40, 40, 255);
+            bufferBuilder.vertex(matrix4f, -100.0f, -100.0f, 100.0f).texture(0.0f, 16.0f).color(40, 40, 40, 255);
+            bufferBuilder.vertex(matrix4f, 100.0f, -100.0f, 100.0f).texture(16.0f, 16.0f).color(40, 40, 40, 255);
+            bufferBuilder.vertex(matrix4f, 100.0f, -100.0f, -100.0f).texture(16.0f, 0.0f).color(40, 40, 40, 255);
+            BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
             matrices.pop();
         }
         this.render(matrices, this.world, 0.0f);
@@ -102,7 +101,6 @@ public class OptiFineCustomSky implements Skybox {
                     float g = (float)vec3d.y;
                     float h = (float)vec3d.z;
                     BackgroundRenderer.applyFogColor();
-                    BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
                     RenderSystem.depthMask(false);
                     RenderSystem.setShaderColor(f, g, h, 1.0F);
                     ShaderProgram shaderProgram = RenderSystem.getShader();
@@ -123,15 +121,15 @@ public class OptiFineCustomSky implements Skybox {
                         float k = fs[1];
                         float l = fs[2];
                         Matrix4f matrix4f = matrices.peek().getPositionMatrix();
-                        bufferBuilder.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
-                        bufferBuilder.vertex(matrix4f, 0.0F, 100.0F, 0.0F).color(j, k, l, fs[3]).next();
+                        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+                        bufferBuilder.vertex(matrix4f, 0.0F, 100.0F, 0.0F).color(j, k, l, fs[3]);
                         int m = 16;
 
                         for(int n = 0; n <= 16; ++n) {
                             float o = (float)n * (float) (Math.PI * 2) / 16.0F;
                             float p = MathHelper.sin(o);
                             float q = MathHelper.cos(o);
-                            bufferBuilder.vertex(matrix4f, p * 120.0F, q * 120.0F, -q * 40.0F * fs[3]).color(fs[0], fs[1], fs[2], 0.0F).next();
+                            bufferBuilder.vertex(matrix4f, p * 120.0F, q * 120.0F, -q * 40.0F * fs[3]).color(fs[0], fs[1], fs[2], 0.0F);
                         }
 
                         BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
@@ -151,11 +149,11 @@ public class OptiFineCustomSky implements Skybox {
                     float k = 30.0F;
                     RenderSystem.setShader(GameRenderer::getPositionTexProgram);
                     RenderSystem.setShaderTexture(0, WorldRendererAccess.getSun());
-                    bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
-                    bufferBuilder.vertex(matrix4f2, -k, 100.0F, -k).texture(0.0F, 0.0F).next();
-                    bufferBuilder.vertex(matrix4f2, k, 100.0F, -k).texture(1.0F, 0.0F).next();
-                    bufferBuilder.vertex(matrix4f2, k, 100.0F, k).texture(1.0F, 1.0F).next();
-                    bufferBuilder.vertex(matrix4f2, -k, 100.0F, k).texture(0.0F, 1.0F).next();
+                    BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+                    bufferBuilder.vertex(matrix4f2, -k, 100.0F, -k).texture(0.0F, 0.0F);
+                    bufferBuilder.vertex(matrix4f2, k, 100.0F, -k).texture(1.0F, 0.0F);
+                    bufferBuilder.vertex(matrix4f2, k, 100.0F, k).texture(1.0F, 1.0F);
+                    bufferBuilder.vertex(matrix4f2, -k, 100.0F, k).texture(0.0F, 1.0F);
                     BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
                     k = 20.0F;
                     RenderSystem.setShaderTexture(0, WorldRendererAccess.getMoonPhases());
@@ -166,12 +164,13 @@ public class OptiFineCustomSky implements Skybox {
                     float o = (float)(m + 0) / 2.0F;
                     float p = (float)(s + 1) / 4.0F;
                     float q = (float)(m + 1) / 2.0F;
-                    bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
-                    bufferBuilder.vertex(matrix4f2, -k, -100.0F, k).texture(p, q).next();
-                    bufferBuilder.vertex(matrix4f2, k, -100.0F, k).texture(t, q).next();
-                    bufferBuilder.vertex(matrix4f2, k, -100.0F, -k).texture(t, o).next();
-                    bufferBuilder.vertex(matrix4f2, -k, -100.0F, -k).texture(p, o).next();
-                    BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+
+                    BufferBuilder bufferBuilder2 = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+                    bufferBuilder2.vertex(matrix4f2, -k, -100.0F, k).texture(p, q);
+                    bufferBuilder2.vertex(matrix4f2, k, -100.0F, k).texture(t, q);
+                    bufferBuilder2.vertex(matrix4f2, k, -100.0F, -k).texture(t, o);
+                    bufferBuilder2.vertex(matrix4f2, -k, -100.0F, -k).texture(p, o);
+                    BufferRenderer.drawWithGlobalProgram(bufferBuilder2.end());
                     float u = this.world.getStarBrightness(tickDelta) * i;
                     if (u > 0.0F) {
                         RenderSystem.setShaderColor(u, u, u, u);

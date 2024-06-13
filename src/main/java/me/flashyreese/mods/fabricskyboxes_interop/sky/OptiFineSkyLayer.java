@@ -121,22 +121,21 @@ public class OptiFineSkyLayer {
     }
 
     private void renderSide(MatrixStack matrixStackIn, Tessellator tess, int side) {
-        BufferBuilder bufferbuilder = tess.getBuffer();
         float f = (float) (side % 3) / 3.0F;
         float f1 = (float) (side / 3) / 2.0F;
         Matrix4f matrix4f = matrixStackIn.peek().getPositionMatrix();
         RenderSystem.setShader(GameRenderer::getPositionTexProgram);
-        bufferbuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
+        BufferBuilder bufferbuilder = tess.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
         this.addVertex(matrix4f, bufferbuilder, -100.0F, -100.0F, -100.0F, f, f1);
         this.addVertex(matrix4f, bufferbuilder, -100.0F, -100.0F, 100.0F, f, f1 + 0.5F);
         this.addVertex(matrix4f, bufferbuilder, 100.0F, -100.0F, 100.0F, f + 0.33333334F, f1 + 0.5F);
         this.addVertex(matrix4f, bufferbuilder, 100.0F, -100.0F, -100.0F, f + 0.33333334F, f1);
-        tess.draw();
+        BufferRenderer.drawWithGlobalProgram(bufferbuilder.end());
     }
 
     private void addVertex(Matrix4f matrix4f, BufferBuilder buffer, float x, float y, float z, float u, float v) {
         Vector4f vector4f = matrix4f.transform(new Vector4f(x, y, z, 1.0F));
-        buffer.vertex(vector4f.x, vector4f.y, vector4f.z).texture(u, v).next();
+        buffer.vertex(vector4f.x, vector4f.y, vector4f.z).texture(u, v);
     }
 
 

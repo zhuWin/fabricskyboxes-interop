@@ -244,7 +244,7 @@ public class FSBInterop {
             }
         }
         try {
-            textureId = new Identifier(namespace, path);
+            textureId = Identifier.of(namespace, path);
         } catch (InvalidIdentifierException e) {
             this.logger.error("Illegal character in namespaced identifier: {}", source);
             return;

@@ -192,7 +192,7 @@ public final class Utils {
             }
         }
         try {
-            textureId = new Identifier(namespace, path);
+            textureId = Identifier.of(namespace, path);
         } catch (InvalidIdentifierException e) {
             return null;
         }

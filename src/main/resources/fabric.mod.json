@@ -22,7 +22,7 @@
     },
     "links": {
       "modmenu.curseforge": "https://curseforge.com/minecraft/mc-mods/fabricskyboxes-interop",
-      "modmenu.discord": "https://discord.gg/MPHVG6MH4e",
+      "modmenu.discord": "https://flashyreese.me/discord",
       "modmenu.donate": "https://ko-fi.com/flashyreese",
       "modmenu.github_releases": "https://github.com/FlashyReese/fabricskyboxes-interop/releases",
       "modmenu.kofi": "https://ko-fi.com/flashyreese",
@@ -35,6 +35,6 @@
   "depends": {
     "fabricloader": ">=0.15",
     "fabricskyboxes": ">=0.7",
-    "minecraft": ">=1.20.5"
+    "minecraft": ">=1.21"
   }
 }
