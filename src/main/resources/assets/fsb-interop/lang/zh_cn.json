@@ -1,7 +1,13 @@
 {
+  "modmenu.descriptionTranslation.fsb-interop": "通过该模组的额外处理，FabricSkyBoxes 将能够应用现有的 MCPatcher/OptiFine 天空资源包。",
+  "modmenu.summaryTranslation.fsb-interop": "为现有的 MCPatcher/OptiFine 天空资源包提供 FabricSkyBoxes 互通支持",
   "options.fsb-interop.title": "FabricSkyBoxes Interop 配置",
   "options.fsb-interop.interoperability": "总开关",
   "options.fsb-interop.interoperability.tooltip": "若开启，此模组将尝试读取/加载 MCPatcher/OptiFine 自定义天空。",
+  "options.fsb-interop.mode": "处理模式",
+  "options.fsb-interop.mode.tooltip": "- 原生：使用基于 OptiFine 天空渲染的重新实现。\n- 转换：将 OptiFine 天空格式转换为 FabricSkyBoxes 现有的天空格式类型。",
+  "options.fsb-interop.mode.native": "原生",
+  "options.fsb-interop.mode.conversion": "转换",
   "options.fsb-interop.process_optifine": "OptiFine 自定义天空",
   "options.fsb-interop.process_optifine.tooltip": "若开启，此模组将尝试读取/加载 OptiFine 自定义天空。",
   "options.fsb-interop.process_mcpatcher": "MCPatcher 自定义天空",
